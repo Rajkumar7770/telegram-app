@@ -22,12 +22,14 @@ if (!TOKEN) {
 const BASE = `https://api.telegram.org/bot${TOKEN}`;
 
 const SHORT_DESCRIPTION =
-  '🛍️ Free instant deal alerts from Flipkart, Amazon, Myntra, Ajio, Blinkit & Zepto. Tap Start!';
+  '🛍️ Your personal deals agent - free instant alerts from Flipkart, Amazon, Myntra, Nykaa & more. Tap Start!';
 
 const FULL_DESCRIPTION =
   'Never miss a loot deal again! 🔥\n\n' +
-  "Grab Karo Deals watches India's top deal-sharing channels around the clock and " +
-  'instantly forwards anything mentioning Flipkart, Amazon, Myntra, Ajio, Blinkit or Zepto.\n\n' +
+  'Grab Karo Deals is your personal deals agent - it watches India\'s top ' +
+  'deal-sharing channels around the clock and instantly forwards anything ' +
+  'mentioning Flipkart, Amazon, Myntra, Ajio, Blinkit, Zepto, Nykaa, JioMart, ' +
+  'Meesho, Tata Neu, Tata CLiQ or Croma.\n\n' +
   '✅ Free, forever\n' +
   '✅ Only matching deals - no spam\n' +
   '✅ Unsubscribe anytime with /stop\n\n' +

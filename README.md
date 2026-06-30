@@ -74,22 +74,21 @@ Deals Velocity above. If you find the exact `@handle`, add it to the
 - These are community-shared deals, not an official store feed - mention
   this to subscribers; verify price/seller before buying.
 
-## About the 30-second refresh (not 5 seconds)
+## About the 30-second refresh, and the safety net around it
 
-5 seconds was the original ask, but here's why it's set to 30 instead:
+This is set to 30 seconds. One thing worth knowing: this polls a public webpage, not a documented API with official rate limits, so hammering a single broken/blocked channel every 30 seconds forever isn't free - it's the kind of pattern that can get a server IP rate-limited if done too aggressively.
 
-- This isn't hitting an official API with documented rate limits - it's
-  requesting a public webpage. Hammering it every 5 seconds, 24/7, across 6
-  channels (17,280+ requests/day just from this one bot) is the kind of
-  pattern that gets an IP rate-limited or blocked, which would break the bot
-  entirely rather than make it faster.
-- There's no practical upside: these channels post every few minutes at
-  most, not every few seconds, so 5s vs 30s makes zero difference to how
-  fast subscribers see a deal, while meaningfully raising block risk.
+So `src/poller.js` has a small built-in safety net: if any one channel fails 3 times in a row (wrong handle, gone private, temporarily blocked, whatever), the bot automatically stops polling *that specific channel* for about a minute (12 cycles) before trying again - while every healthy channel keeps polling at the full pace. You'll see this in the logs as "pausing it for ~360s." This minimizes the risk of a single bad channel causing the bot to hammer a wall indefinitely.
 
-30s is already fast enough that deals arrive within half a minute of being
-posted. Adjust via `POLL_INTERVAL_SECONDS` in `.env` if you want, but going
-much below ~15-20s is not recommended.
+## "Agent" vs "bot"
+
+Renamed in the copy you control - the welcome message and the bot's
+description (set via `npm run setup-profile`) now describe it as your
+"personal deals agent." One thing that won't change: Telegram's own UI will
+always show a "BOT" badge next to its username, and the underlying mechanism
+is still the Telegram *Bot* API - that's just the platform's term for any
+automated account, not something this project can rebrand. The "agent"
+framing lives in the words people read, not in Telegram's system labels.
 
 ## How you'd actually earn money from this (affiliate marketing, explained)
 
@@ -144,7 +143,82 @@ documented no-op (returns the link unchanged). If EarnKaro ever publishes a
 real API, or you're fine manually converting your best 2-3 deals a day
 instead of every single one, that's the file to edit.
 
+### A concrete plan, phase by phase
 
+**Phase 1 - this week:** sign up for EarnKaro (earnkaro.com, free, no
+documents) and separately for Nykaa's own direct program
+(affiliate.nykaa.com, also free). EarnKaro alone covers Flipkart, Myntra,
+Ajio, JioMart, Meesho, and Nykaa Fashion in one dashboard. EarnKaro's
+published rates are up to 8% on Flipkart and up to 10% on Myntra, paid out
+once your balance crosses just ₹10 - low enough that you'll see your first
+payout quickly even at small volume. Treat the "₹20-30k/month" figures in
+their own marketing as the ceiling for established affiliates with real
+audiences, not a starting expectation - with zero subscribers today, your
+realistic first-month number is whatever a handful of clicks converts to,
+likely a few hundred rupees at most. That's normal; it compounds with
+subscriber count.
+
+**Phase 2 - pick what gets monetized:** since there's no automatic
+conversion (explained above), don't try to convert every single deal that
+goes out - pick your 1-3 best deals of the day (highest discount, most
+useful category), run just those through EarnKaro's "Make Link" tool
+manually, and send those as a highlighted/pinned "Deal of the Day" in
+addition to the regular automated feed. A few minutes a day, not a
+full-time job.
+
+**Phase 3 - track and double down:** EarnKaro's dashboard shows clicks and
+confirmed orders per link. After a couple weeks, you'll see which platform
+and category actually convert for your subscriber base - lean into more of
+that, and don't worry about the categories that get clicks but no sales.
+
+**Phase 4 - once you have real volume:** Amazon Associates and Flipkart's
+direct program (closed to brand-new applicants, but Flipkart does sometimes
+reopen direct signups for established affiliates with traffic history) tend
+to pay better than going through an aggregator's cut. Worth re-checking
+eligibility every few months as your subscriber count grows - this isn't a
+day-one move, more a "graduate to" later.
+
+### Promoting it to actually get subscribers
+
+A bot with great deals and zero subscribers earns nothing, so this matters
+as much as the technical side. A few channels worth trying, roughly in order
+of effort-to-payoff for a brand-new channel:
+
+WhatsApp is the highest-conversion starting point in India specifically -
+share your bot's link in any group chats you're already a genuine member of
+(college, family, local community groups), and ask a few friends to do the
+same. This converts far better than cold outreach because there's existing
+trust.
+
+Instagram Reels and Threads work well for deals content specifically -
+short "today's best 3 deals" video or carousel posts with your bot link in
+bio, posted consistently (even 3-4x a week), tend to outperform one-off
+posts by a wide margin since the algorithm rewards consistency over single
+viral hits.
+
+Cross-promotion with similar-sized Telegram channels is underused but
+effective: message admins of other smallish deal/coupon channels and
+propose a shoutout swap (you post about their channel, they post about
+yours) - works best channel-to-channel at similar subscriber counts, since
+much bigger channels have little incentive to reciprocate.
+
+Reddit can work, but tread carefully - many India-focused deal communities
+explicitly ban self-promotion and will ban your account for posting a bot
+link without warning (DesiDime's own forum rules say exactly this). If you
+try Reddit, search for the specific subreddit's rules first, and consider
+participating genuinely before ever posting your own link.
+
+Telegram's own discovery surfaces (its in-app search, and third-party
+directory sites that list public channels by category) are free and worth
+listing on once you have at least a few dozen subscribers - very low effort
+for steady, if slow, organic discovery.
+
+Paid promotion (boosting an Instagram post, a shoutout in someone else's
+larger channel) is the fastest lever once you have some budget, but isn't
+needed to start - everything above is free and is where most successful
+small deal channels in India actually began.
+
+## 1. Renaming, description, and profile photo
 
 You've already renamed it via @BotFather. For the description and profile
 photo, those ARE settable through the Bot API (not just BotFather), so a
@@ -200,7 +274,6 @@ channel's username (no `@`). No other code changes needed.
 
 ```
 index.js                  entry point - starts the bot + the poller
-generate_profile_image.py one-off Python script that generated assets/bot-profile.jpg
 scripts/setupProfile.js   one-off script: pushes description + photo to Telegram
 assets/bot-profile.jpg    the bot's profile photo
 src/config.js             channel list + platform keywords (edit this most)

@@ -7,12 +7,13 @@ function createBot(token) {
   bot.start((ctx) => {
     addSubscriber(ctx.chat.id);
     ctx.reply(
-      '🛍️ Welcome to Grab Karo Deals!\n\n' +
+      '🛍️ Welcome to Grab Karo Deals - your personal deals agent!\n\n' +
         "You're now subscribed to free, instant deal alerts from Flipkart, Amazon, " +
-        'Myntra, Ajio, Blinkit and Zepto. 🔥\n\n' +
+        'Myntra, Ajio, Blinkit, Zepto, Nykaa, JioMart, Meesho, Tata Neu, Tata CLiQ ' +
+        'and Croma. 🔥\n\n' +
         "Here's how it works: I watch a handful of well-known Indian deal-sharing " +
         'channels around the clock and forward you anything that mentions one of ' +
-        'those 6 platforms - so you see it the moment it drops, without needing to ' +
+        'those platforms - so you see it the moment it drops, without needing to ' +
         'join a dozen noisy channels yourself.\n\n' +
         "One honest note: these are community-curated deals, not an official store " +
         'feed, so always double-check the price and seller before buying.\n\n' +

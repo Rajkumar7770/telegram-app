@@ -4,13 +4,32 @@ const { matchesPlatform } = require('./filter');
 const { broadcastDeal } = require('./broadcast');
 const { CHANNELS, PLATFORMS, POLL_INTERVAL_SECONDS } = require('./config');
 
+// Per-channel failure tracking. At a 5s interval, hammering a channel that's
+// erroring on every request (wrong handle, gone private, or - worst case -
+// Telegram rate-limiting this server's IP) just makes things worse. After a
+// few consecutive failures, that one channel is skipped for a short cooldown
+// instead of retried every single cycle, while every healthy channel keeps
+// polling at full speed.
+const FAILURE_THRESHOLD = 3;
+const COOLDOWN_CYCLES = 12; // ~1 minute of skipping, at the default 5s interval
+const channelState = {}; // { [channel]: { failures: number, skipUntilCycle: number } }
+let cycleCount = 0;
+
 async function pollOnce(bot) {
+  cycleCount += 1;
   const seen = getSeenIds();
   const newlySeenIds = [];
 
   for (const channel of CHANNELS) {
+    const state = channelState[channel] || { failures: 0, skipUntilCycle: 0 };
+
+    if (cycleCount < state.skipUntilCycle) {
+      continue; // still cooling down after repeated failures
+    }
+
     try {
       const posts = await fetchChannelPosts(channel);
+      state.failures = 0; // reset on any success
 
       if (posts.length === 0) {
         console.warn(
@@ -29,8 +48,19 @@ async function pollOnce(bot) {
         await broadcastDeal(bot, post);
       }
     } catch (err) {
-      console.error(`Error polling @${channel}:`, err.message);
+      state.failures += 1;
+      console.error(`Error polling @${channel} (failure ${state.failures}):`, err.message);
+
+      if (state.failures >= FAILURE_THRESHOLD) {
+        state.skipUntilCycle = cycleCount + COOLDOWN_CYCLES;
+        console.warn(
+          `@${channel}: ${state.failures} failures in a row - pausing it for ~${COOLDOWN_CYCLES * POLL_INTERVAL_SECONDS}s ` +
+            'so a dead/blocked channel does not get hammered every cycle.'
+        );
+      }
     }
+
+    channelState[channel] = state;
   }
 
   markSeen(newlySeenIds);
